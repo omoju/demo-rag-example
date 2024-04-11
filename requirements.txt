@@ -1,0 +1,10 @@
+llama-index-core
+llama-index-llms-openai
+llama-index-readers-web
+llama-index-embeddings-huggingface
+openai
+python-dotenv
+matplotlib
+fastapi
+uvicorn
+jupyter
