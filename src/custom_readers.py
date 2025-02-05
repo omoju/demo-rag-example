@@ -1,64 +1,104 @@
-from typing import Union, List
 import requests
+import logging
+from typing import List 
 from bs4 import BeautifulSoup
 
 from llama_index.core import Document
-from llama_index.readers.web import BeautifulSoupWebReader
 
-def trim_spacing(text:str) -> str:
-    return "\n".join([t for t in text.split("\n") if t])
+import time
+import requests
+import logging
+from bs4 import BeautifulSoup
+from typing import List 
+from llama_index.core import Document
 
-def get_blog_post_links(base_url:str, subdomain:str = "/blog/"):
-    blog_post_links = []
-    page = requests.get(base_url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    card_titles = soup.find_all(class_="card-title")
-    next_page = soup.find("a", class_="pagination__next")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
-    stripped_url = base_url.replace(subdomain, "")
-    
-    for title in card_titles:
-        if title.a:
-            blog_post_links.append(stripped_url + title.a['href'])
-    
-    if next_page:
-        blog_post_links.extend(
-            get_blog_post_links(
-                base_url.replace(subdomain, next_page['href']),
-                next_page['href']
-            )
-        )
-
-    return blog_post_links
-
-def parse_blog_post(link:str):
-    blog_elements = []
-    page = requests.get(link)
-    soup = BeautifulSoup(page.text, "html.parser")
-
-    post_title = soup.find("h3", class_="title").get_text()
-    post_body = soup.find("article", class_="blog-post").get_text()
-    post_date = soup.find("h6", class_="category").get_text()
-
-    return "\n".join([post_title, post_date, trim_spacing(post_body)])
-
-class FimioBlogWebReader(BeautifulSoupWebReader):
+class BlogScraper:
     def __init__(self):
-        super().__init__()
+        self.base_url = 'http://omojumiller.com'
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        self.posts = []
 
-    def load_data(self, base_url:str, n:Union[bool, int] = None) -> List[Document]:
-        documents = []
-        blog_post_links = get_blog_post_links(base_url)
-        if n:
-            blog_post_links = blog_post_links[:n]
+    def fetch_page(self, url):
+        """Fetch a page with error handling and rate limiting"""
+        try:
+            time.sleep(2)  # Rate limiting
+            response = requests.get(url, headers=self.headers)
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            logging.error(f"Error fetching {url}: {e}")
+            return None
 
-        for link in blog_post_links:
-            try:
-                blog_post = parse_blog_post(link)
-                extra_info = {"URL": link}
-            except Exception as e:
-                raise ValueError(f"Failed to parse page at {link}.\nError: {e}")
+    def parse_post(self, post_element):
+        """Extract information from a single blog post element"""
+        try:
+            # Find elements based on the actual HTML structure
+            title_element = post_element.find('h1').find('a')
+            title = title_element.get_text(strip=True)
+            link = title_element['href']
+            date_element = post_element.find('time')
+            date = date_element.get_text(strip=True)
+            description = post_element.find('p', class_='').get_text(strip=True)
             
-            documents.append(Document(text=blog_post, id_=link, extra_info=extra_info))
+            # Get full post content
+            if link:
+                post_page = self.fetch_page(link)
+                if post_page:
+                    post_soup = BeautifulSoup(post_page, 'html.parser')
+                    # You might need to adjust this selector based on the article page structure
+                    content_element = post_soup.find('div', class_='post') or post_soup.find('article')
+                    full_content = content_element.get_text(strip=True, separator=' ') if content_element else ''
+            
+            return {
+                'title': title,
+                'link': link,
+                'date': date,
+                'description': description,
+                'content': full_content if 'full_content' in locals() else ''
+            }
+        except Exception as e:
+            logging.error(f"Error parsing post: {e}")
+            return None
 
+    def scrape_posts(self):
+        """Main function to scrape all blog posts"""
+        logging.info("Starting blog scraping")
+        
+        # Fetch the main page
+        html = self.fetch_page(self.base_url)
+        if not html:
+            return
+
+        soup = BeautifulSoup(html, 'html.parser')
+        # Find the post list
+        post_list = soup.find('ol', class_='post-list')
+        if not post_list:
+            logging.error("Could not find post list")
+            return
+
+        # Find all post items
+        post_items = post_list.find_all('div', class_='deets')
+        
+        for post_item in post_items:
+            post_data = self.parse_post(post_item)
+            if post_data:
+                self.posts.append(post_data)
+                logging.info(f"Scraped post: {post_data['title']}")
+
+        return self.save_posts()
+
+    def save_posts(self)-> List[Document]:
+        """Save scraped posts to a JSON file"""
+        documents = []
+        for post in self.posts:
+            documents.append(Document(text=post['content']))
+        
         return documents
+

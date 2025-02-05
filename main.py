@@ -1,7 +1,7 @@
 import logging
 
 from src.rag_creator import RAGCreator
-from src.custom_readers import FimioBlogWebReader
+from src.custom_readers import BlogScraper
 
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse, Response
@@ -26,15 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Required parameters for the RAG
-REQUIRED_FIMIO_PARAMS = {
-    "base_url": "https://fimio.xyz/blog/"
-}
-
+scraper = BlogScraper()
 # Load the RAG and instantiate it globally
-rag = RAGCreator().setup_and_deploy_RAG(
-    data_loader=FimioBlogWebReader,
-    data_loader_kwargs=REQUIRED_FIMIO_PARAMS
+rag = RAGCreator().setup_and_deploy_RAG(  
+    documents = scraper.scrape_posts()
 )
 
 ### --- ENDPOINTS --- ###
@@ -77,4 +72,4 @@ async def query(query:str):
     
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=5000, timeout_graceful_shutdown=10)
+    uvicorn.run(app, host="localhost", port=8000, timeout_graceful_shutdown=10)

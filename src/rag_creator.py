@@ -28,11 +28,11 @@ class RAGCreator():
             params[k] = params[k].__name__
         self.rag_info.update(params)
 
-    def load_documents(self, data_loader, data_loader_kwargs:dict):
+    def load_documents(self, documents):
         self._update_rag_info(locals())
         
         try:
-            docs = data_loader().load_data(**data_loader_kwargs)
+            docs = documents
         except Exception as e:
             raise TypeError(f"Error loading documents: {e}.")
         self.documents = docs
@@ -63,12 +63,12 @@ class RAGCreator():
         self._update_rag_info(locals())
         self.query_engine = query_engine.from_args(self.retriever)
     
-    def setup_and_deploy_RAG(self, data_loader, data_loader_kwargs, 
+    def setup_and_deploy_RAG(self, documents, 
                              node_parser=SimpleNodeParser, chunk_size=1024, 
                              open_ai_model="gpt-3.5-turbo", embed_model="local:BAAI/bge-small-en", 
                              vector_store_impl=VectorStoreIndex, similarity_top_k=2, 
                              query_engine=RetrieverQueryEngine):
-        self.load_documents(data_loader, data_loader_kwargs)
+        self.load_documents(documents)
         self.parse_docs_to_nodes(node_parser, chunk_size)
         self.set_model_settings(open_ai_model, embed_model)
         self.create_retriever(vector_store_impl, similarity_top_k)
