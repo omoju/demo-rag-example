@@ -12,15 +12,9 @@ app = FastAPI()
 
 ### --- GLOBAL SETUP --- ###
 
-# List of allowed origins
-origins = [
-    "http://localhost:3000"
-]
-
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,6 +64,3 @@ async def query(query:str):
             content={"message": f"An error occurred: {e}"}
         )
     
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="localhost", port=8000, timeout_graceful_shutdown=10)
