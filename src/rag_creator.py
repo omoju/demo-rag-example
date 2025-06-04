@@ -47,7 +47,7 @@ class RAGCreator():
             node.id_ = f"node-{idx}"
         self.nodes = nodes
         
-    def set_model_settings(self, open_ai_model="gpt-3.5-turbo", embed_model="local:BAAI/bge-small-en"):
+    def set_model_settings(self, open_ai_model="gpt-4.1", embed_model="local:BAAI/bge-small-en"):
         self._update_rag_info(locals())
         load_dotenv()
         
