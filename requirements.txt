@@ -70,7 +70,7 @@ jupyterlab-pygments==0.3.0
 jupyterlab-server==2.26.0
 jupyterlab-widgets==3.0.10
 kiwisolver==1.4.5
-llama-index-core==0.10.28
+llama-index-core==0.13.0
 llama-index-embeddings-huggingface==0.2.0
 llama-index-llms-openai==0.1.15
 llama-index-readers-web==0.1.8
