@@ -65,7 +65,7 @@ jupyter-events==0.10.0
 jupyter-lsp==2.2.5
 jupyter-server==2.13.0
 jupyter-server-terminals==0.5.3
-jupyterlab==4.1.6
+jupyterlab==4.4.8
 jupyterlab-pygments==0.3.0
 jupyterlab-server==2.26.0
 jupyterlab-widgets==3.0.10
