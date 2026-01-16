@@ -158,7 +158,7 @@ tldextract==5.1.2
 tokenizers==0.15.2
 torch==2.2.2
 tornado==6.4
-tqdm==4.66.2
+tqdm==4.66.3
 traitlets==5.14.2
 transformers==4.39.3
 trio==0.25.0
